@@ -1,0 +1,7 @@
+{
+  "port": 3000,
+  "adminUser": "admin",
+  "adminPassword": "change-me",
+  "siteName": "Plant Swap",
+  "vapidSubject": "mailto:you@example.com"
+}

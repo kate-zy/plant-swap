@@ -1,0 +1,10 @@
+{
+  "name": "plant-swap",
+  "version": "1.0.0",
+  "description": "A simple site to share plants, cuttings, and greenery you have available to swap or give away.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "license": "ISC"
+}

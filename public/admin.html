@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plant Swap — Admin</title>
+<link rel="stylesheet" href="/style.css">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<meta name="theme-color" content="#3d4630">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Plant Swap">
+</head>
+<body>
+  <header class="site-header">
+    <h1>🌿 Admin</h1>
+    <p>Manage your plant listings</p>
+  </header>
+
+  <main>
+    <div class="toolbar">
+      <a href="/index.html" class="btn btn-outline" style="text-decoration:none;">&larr; View public page</a>
+    </div>
+
+    <div class="admin-layout">
+      <div class="admin-sidebar">
+        <div class="panel">
+          <h2>Add a plant / cutting</h2>
+          <form id="add-form">
+            <div class="field">
+              <label for="f-name">Name / type *</label>
+              <input type="text" id="f-name" required placeholder="e.g. Pothos cutting">
+            </div>
+            <div class="field">
+              <label for="f-form">Form *</label>
+              <select id="f-form" required>
+                <option value="fresh_prop">Fresh prop</option>
+                <option value="bare_root">Bare root</option>
+                <option value="in_soil" selected>In soil</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="f-qty">Quantity available</label>
+              <input type="number" id="f-qty" min="1" value="1" required>
+            </div>
+            <div class="field">
+              <label for="f-notes">Notes</label>
+              <textarea id="f-notes" placeholder="Pickup location, care notes, anything a swapper should know"></textarea>
+            </div>
+            <div class="field">
+              <label for="f-photo">Photo</label>
+              <input type="file" id="f-photo" accept="image/*" capture="environment">
+              <div id="f-photo-preview" class="file-preview"></div>
+            </div>
+            <button type="submit" class="btn-primary" style="width:100%;">Add listing</button>
+          </form>
+        </div>
+
+        <div class="panel">
+          <h2>Notifications</h2>
+          <p class="meta">Get a push notification on this device the moment someone claims a plant — works even if this tab is closed.</p>
+          <button id="notify-enable" class="btn-primary" style="width:100%; margin-top:10px;">Enable push notifications</button>
+          <button id="notify-test" class="btn-outline" style="width:100%; margin-top:8px; display:none;">Send test notification</button>
+          <div id="notify-status" class="meta" style="margin-top:10px;"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Your listings</h2>
+        <div id="admin-list"></div>
+        <div id="admin-empty" class="empty-state" style="display:none;">No listings yet — add your first one!</div>
+      </div>
+    </div>
+  </main>
+
+  <div id="toast" class="toast" style="display:none;"></div>
+
+  <script src="/admin.js"></script>
+</body>
+</html>
