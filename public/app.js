@@ -196,7 +196,7 @@
     try {
       const res = await fetch('/api/config');
       const cfg = await res.json();
-      if (cfg.siteName) document.getElementById('site-title').textContent = `🌿 ${cfg.siteName}`;
+      if (cfg.siteName) document.getElementById('site-title').textContent = `🌿 ${cfg.siteName} 🌿`;
       if (cfg.siteName) document.title = cfg.siteName;
     } catch (e) {}
   }
