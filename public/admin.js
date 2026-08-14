@@ -9,6 +9,17 @@
   const notifyTestBtn = document.getElementById('notify-test');
   const notifyStatus = document.getElementById('notify-status');
 
+  const editModal = document.getElementById('edit-modal');
+  const editForm = document.getElementById('edit-form');
+  const editCancelBtn = document.getElementById('edit-cancel');
+  const eName = document.getElementById('e-name');
+  const eForm = document.getElementById('e-form');
+  const eQty = document.getElementById('e-qty');
+  const eQtyHint = document.getElementById('e-qty-hint');
+  const eNotes = document.getElementById('e-notes');
+  const ePhotoInput = document.getElementById('e-photo');
+  const ePhotoPreview = document.getElementById('e-photo-preview');
+
   const FORM_LABELS = {
     fresh_prop: 'Fresh prop',
     bare_root: 'Bare root',
@@ -89,6 +100,11 @@
 
     const actions = document.createElement('div');
     actions.className = 'actions';
+    const editBtn = document.createElement('button');
+    editBtn.className = 'btn-outline';
+    editBtn.textContent = 'Edit';
+    editBtn.addEventListener('click', () => openEditModal(p));
+    actions.appendChild(editBtn);
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'btn-danger';
     deleteBtn.textContent = 'Delete listing';
@@ -177,6 +193,89 @@
     adminEmpty.style.display = plants.length ? 'none' : 'block';
     plants.forEach((p) => adminList.appendChild(renderRow(p)));
   }
+
+  // --- Edit listing ---
+  let editTargetId = null;
+  let pendingEditPhotoDataUrl = null;
+
+  function openEditModal(plant) {
+    editTargetId = plant.id;
+    pendingEditPhotoDataUrl = null;
+    eName.value = plant.name;
+    eForm.value = plant.form;
+    eQty.value = plant.quantity;
+    eNotes.value = plant.notes || '';
+    ePhotoInput.value = '';
+
+    if (plant.photo) {
+      ePhotoPreview.style.backgroundImage = `url('${plant.photo}')`;
+      ePhotoPreview.style.display = 'block';
+    } else {
+      ePhotoPreview.style.display = 'none';
+    }
+
+    const reserved = plant.quantity - plant.remaining;
+    if (reserved > 0) {
+      eQty.min = reserved;
+      eQtyHint.textContent = `${reserved} already spoken for (pending or confirmed) — can't go below that.`;
+    } else {
+      eQty.min = 1;
+      eQtyHint.textContent = '';
+    }
+
+    editModal.style.display = 'flex';
+  }
+
+  function closeEditModal() {
+    editModal.style.display = 'none';
+    editTargetId = null;
+  }
+
+  editCancelBtn.addEventListener('click', closeEditModal);
+  editModal.addEventListener('click', (e) => {
+    if (e.target === editModal) closeEditModal();
+  });
+
+  ePhotoInput.addEventListener('change', () => {
+    const file = ePhotoInput.files[0];
+    if (!file) {
+      pendingEditPhotoDataUrl = null;
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      pendingEditPhotoDataUrl = reader.result;
+      ePhotoPreview.style.backgroundImage = `url('${reader.result}')`;
+      ePhotoPreview.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  editForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!editTargetId) return;
+    const body = {
+      name: eName.value.trim(),
+      form: eForm.value,
+      quantity: eQty.value,
+      notes: eNotes.value.trim()
+    };
+    if (pendingEditPhotoDataUrl) body.photoDataUrl = pendingEditPhotoDataUrl;
+    try {
+      const res = await fetch(`/api/plants/${editTargetId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not save changes');
+      showToast('Listing updated!');
+      closeEditModal();
+      await load();
+    } catch (err) {
+      showToast(err.message);
+    }
+  });
 
   load();
 

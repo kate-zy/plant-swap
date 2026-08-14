@@ -495,11 +495,13 @@ const server = http.createServer((req, res) => {
           p.form = body.form;
         }
         if (body.quantity !== undefined) {
-          const newQty = Math.max(1, parseInt(body.quantity, 10) || 1);
-          if (newQty < reservedQty(p)) {
-            return sendJSON(res, 400, { error: `Can't set quantity below ${reservedQty(p)} already spoken for` });
+          const parsedQty = parseInt(body.quantity, 10);
+          const requestedQty = Number.isFinite(parsedQty) ? parsedQty : 1;
+          const reserved = reservedQty(p);
+          if (requestedQty < reserved) {
+            return sendJSON(res, 400, { error: `Can't set quantity below ${reserved} already spoken for` });
           }
-          p.quantity = newQty;
+          p.quantity = Math.max(1, requestedQty);
         }
         if (body.photoDataUrl) {
           const photo = saveDataUrlImage(body.photoDataUrl, p.id);
