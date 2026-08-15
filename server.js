@@ -134,11 +134,12 @@ function readBody(req, callback) {
   req.on('error', (err) => callback(err));
 }
 
-// Units still reserved: any claim that's pending confirmation or already confirmed
-// (i.e. spoken for) counts against the total. Rejected claims are removed outright.
+/// Units still reserved: any claim that's pending confirmation, confirmed, or
+// already picked up (i.e. spoken for or gone) counts against the total.
+// Rejected claims are removed outright.
 function reservedQty(plant) {
   return (plant.claims || [])
-    .filter((c) => c.status === 'requested' || c.status === 'confirmed')
+    .filter((c) => c.status === 'requested' || c.status === 'confirmed' || c.status === 'picked_up')
     .reduce((sum, c) => sum + c.qty, 0);
 }
 
@@ -460,8 +461,8 @@ const server = http.createServer((req, res) => {
     });
   }
 
-  // /api/plants/:id/claims/:claimId/(confirm|reject)  — admin only
-  const claimActionMatch = pathname.match(/^\/api\/plants\/([a-f0-9]+)\/claims\/([a-f0-9]+)\/(confirm|reject)$/);
+  // /api/plants/:id/claims/:claimId/(confirm|reject|pickup)  — admin only
+  const claimActionMatch = pathname.match(/^\/api\/plants\/([a-f0-9]+)\/claims\/([a-f0-9]+)\/(confirm|reject|pickup)$/);
   if (claimActionMatch && method === 'POST') {
     if (!requireAdmin(req, res)) return;
     const [, id, claimId, action] = claimActionMatch;
@@ -473,6 +474,9 @@ const server = http.createServer((req, res) => {
 
     if (action === 'confirm') {
       claim.status = 'confirmed';
+    } else if (action === 'pickup') {
+      claim.status = 'picked_up';
+      claim.pickedUpAt = new Date().toISOString();
     } else {
       plant.claims = plant.claims.filter((c) => c.id !== claimId);
     }

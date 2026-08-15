@@ -181,16 +181,22 @@
     if (claim.status === 'requested') {
       const confirmBtn = document.createElement('button');
       confirmBtn.className = 'btn-secondary';
-      confirmBtn.textContent = 'Confirm picked up';
+      confirmBtn.textContent = 'Confirm';
       confirmBtn.addEventListener('click', () => claimAction(plant.id, claim.id, 'confirm'));
       actions.appendChild(confirmBtn);
-    }
 
-    const rejectBtn = document.createElement('button');
-    rejectBtn.className = 'btn-outline';
-    rejectBtn.textContent = claim.status === 'confirmed' ? 'Undo' : 'Reject';
-    rejectBtn.addEventListener('click', () => claimAction(plant.id, claim.id, 'reject'));
-    actions.appendChild(rejectBtn);
+      const rejectBtn = document.createElement('button');
+      rejectBtn.className = 'btn-outline';
+      rejectBtn.textContent = 'Reject';
+      rejectBtn.addEventListener('click', () => claimAction(plant.id, claim.id, 'reject'));
+      actions.appendChild(rejectBtn);
+    } else if (claim.status === 'confirmed') {
+      const pickedUpBtn = document.createElement('button');
+      pickedUpBtn.className = 'btn-secondary';
+      pickedUpBtn.textContent = 'Picked up';
+      pickedUpBtn.addEventListener('click', () => claimAction(plant.id, claim.id, 'pickup'));
+      actions.appendChild(pickedUpBtn);
+    }
 
     cRow.appendChild(actions);
     return cRow;
@@ -224,6 +230,46 @@
     }
   }
 
+  const pickedUpList = document.getElementById('picked-up-list');
+  const pickedUpEmpty = document.getElementById('picked-up-empty');
+  const pickedUpCount = document.getElementById('picked-up-count');
+
+  function formatShortDate(iso) {
+    const d = new Date(iso);
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  }
+
+  function renderPickedUpRow(plant, claim) {
+    const row = document.createElement('div');
+    row.className = 'picked-up-row';
+    const what = document.createElement('div');
+    what.className = 'picked-up-what';
+    what.innerHTML = `<span class="who">${escapeHtml(claim.name)}</span> — ${escapeHtml(plant.name)} ` +
+      `(${claim.qty} ${claim.qty === 1 ? 'unit' : 'units'})`;
+    row.appendChild(what);
+    const when = document.createElement('div');
+    when.className = 'picked-up-when';
+    when.textContent = claim.pickedUpAt ? formatShortDate(claim.pickedUpAt) : '';
+    row.appendChild(when);
+    return row;
+  }
+
+  function renderPickedUp(plants) {
+    const pickedUp = [];
+    plants.forEach((p) => {
+      (p.claims || []).forEach((c) => {
+        if (c.status === 'picked_up') pickedUp.push({ plant: p, claim: c });
+      });
+    });
+    pickedUp.sort((a, b) => new Date(b.claim.pickedUpAt || 0) - new Date(a.claim.pickedUpAt || 0));
+
+    pickedUpList.innerHTML = '';
+    pickedUpEmpty.style.display = pickedUp.length ? 'none' : 'block';
+    const totalUnits = pickedUp.reduce((sum, { claim }) => sum + claim.qty, 0);
+    pickedUpCount.textContent = pickedUp.length ? `(${totalUnits} ${totalUnits === 1 ? 'unit' : 'units'})` : '';
+    pickedUp.forEach(({ plant, claim }) => pickedUpList.appendChild(renderPickedUpRow(plant, claim)));
+  }
+
   async function load() {
     const res = await fetch('/api/plants');
     const plants = await res.json();
@@ -231,6 +277,7 @@
     adminList.innerHTML = '';
     adminEmpty.style.display = plants.length ? 'none' : 'block';
     plants.forEach((p) => adminList.appendChild(renderRow(p)));
+    renderPickedUp(plants);
   }
 
   // --- Edit listing ---
