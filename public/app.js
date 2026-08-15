@@ -16,6 +16,8 @@
     const isOther = claimContactSelect.value === 'other';
     claimContactOther.style.display = isOther ? 'block' : 'none';
     if (isOther) claimContactOther.focus();
+    claimContactSelect.classList.remove('invalid');
+    document.getElementById('err-claim-contact').classList.remove('visible');
   });
 
   const FORM_LABELS = {
@@ -125,6 +127,36 @@
     });
   }
 
+  const claimNameInput = document.getElementById('claim-name');
+  const errName = document.getElementById('err-claim-name');
+  const errContact = document.getElementById('err-claim-contact');
+  const errQty = document.getElementById('err-claim-qty');
+
+  function setFieldError(inputEl, errEl, msg) {
+    inputEl.classList.add('invalid');
+    errEl.textContent = msg;
+    errEl.classList.add('visible');
+  }
+
+  function clearFieldError(inputEl, errEl) {
+    inputEl.classList.remove('invalid');
+    errEl.textContent = '';
+    errEl.classList.remove('visible');
+  }
+
+  function clearAllErrors() {
+    clearFieldError(claimNameInput, errName);
+    clearFieldError(claimContactSelect, errContact);
+    clearFieldError(claimQtyInput, errQty);
+  }
+
+  // Clear each field's error as soon as the person fixes it — no need to
+  // wait for another submit attempt.
+  claimNameInput.addEventListener('input', () => clearFieldError(claimNameInput, errName));
+  claimContactSelect.addEventListener('input', () => clearFieldError(claimContactSelect, errContact));
+  claimContactOther.addEventListener('input', () => clearFieldError(claimContactSelect, errContact));
+  claimQtyInput.addEventListener('input', () => clearFieldError(claimQtyInput, errQty));
+
   function openClaimModal(plant) {
     claimTarget = plant;
     claimPlantName.textContent = `${plant.name} — ${plant.remaining} available`;
@@ -132,6 +164,7 @@
     claimQtyInput.value = 1;
     claimQtyInput.max = plant.remaining;
     claimContactOther.style.display = 'none';
+    clearAllErrors();
     modal.style.display = 'flex';
   }
 
@@ -148,16 +181,42 @@
   claimForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!claimTarget) return;
-    const name = document.getElementById('claim-name').value.trim();
+
+    const name = claimNameInput.value.trim();
     const contact = claimContactSelect.value === 'other'
       ? claimContactOther.value.trim()
       : claimContactSelect.value;
+    const qty = parseInt(claimQtyInput.value, 10);
+
+    clearAllErrors();
+    let firstInvalid = null;
+
+    if (!name) {
+      setFieldError(claimNameInput, errName, 'Please enter your name.');
+      firstInvalid = firstInvalid || claimNameInput;
+    }
     if (!contact) {
-      showToast(claimContactSelect.value === 'other' ? 'Let us know how to reach you' : 'Please choose an option');
+      setFieldError(
+        claimContactSelect,
+        errContact,
+        claimContactSelect.value === 'other' ? 'Let us know how to reach you.' : 'Please choose an option.'
+      );
+      firstInvalid = firstInvalid || claimContactSelect;
+    }
+    if (!Number.isFinite(qty) || qty < 1) {
+      setFieldError(claimQtyInput, errQty, 'Enter at least 1.');
+      firstInvalid = firstInvalid || claimQtyInput;
+    } else if (qty > claimTarget.remaining) {
+      setFieldError(claimQtyInput, errQty, `Only ${claimTarget.remaining} left — lower the amount.`);
+      firstInvalid = firstInvalid || claimQtyInput;
+    }
+
+    if (firstInvalid) {
+      firstInvalid.focus();
       return;
     }
+
     const message = document.getElementById('claim-message').value.trim();
-    const qty = Math.max(1, parseInt(claimQtyInput.value, 10) || 1);
     try {
       const res = await fetch(`/api/plants/${claimTarget.id}/claim`, {
         method: 'POST',

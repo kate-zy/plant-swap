@@ -50,10 +50,11 @@
     <div class="modal">
       <h2>Claim this plant</h2>
       <p id="claim-plant-name" style="color:var(--ink-soft); margin-top:-8px;"></p>
-      <form id="claim-form">
+      <form id="claim-form" novalidate>
         <div class="field">
           <label for="claim-name">Your name</label>
           <input type="text" id="claim-name" required>
+          <div class="field-error" id="err-claim-name"></div>
         </div>
         <div class="field">
           <label for="claim-contact">How will you grab it?</label>
@@ -64,10 +65,12 @@
             <option value="other">Other...</option>
           </select>
           <input type="text" id="claim-contact-other" placeholder="Tell us how/when, or how to reach you" style="display:none; margin-top:8px;">
+          <div class="field-error" id="err-claim-contact"></div>
         </div>
         <div class="field" id="claim-qty-field">
           <label for="claim-qty">How many would you like?</label>
           <input type="number" id="claim-qty" min="1" value="1" required>
+          <div class="field-error" id="err-claim-qty"></div>
         </div>
         <div class="field">
           <label for="claim-message">Message (optional)</label>
