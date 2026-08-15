@@ -7,6 +7,7 @@ const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const zlib = require('zlib');
 const { URL } = require('url');
 
 const ROOT = __dirname;
@@ -340,6 +341,10 @@ const MIME = {
   '.json': 'application/json; charset=utf-8'
 };
 
+// Text-ish assets compress well with gzip; images/icons are already compact
+// binary formats where gzip just burns CPU for little to no size win.
+const COMPRESSIBLE_EXT = new Set(['.html', '.css', '.js', '.json', '.svg', '.webmanifest']);
+
 function serveStatic(req, res, urlPath, baseDir, stripPrefix) {
   baseDir = baseDir || PUBLIC_DIR;
   let filePath = urlPath === '/' ? '/index.html' : urlPath;
@@ -348,11 +353,52 @@ function serveStatic(req, res, urlPath, baseDir, stripPrefix) {
   const fullPath = path.join(baseDir, filePath);
   if (!fullPath.startsWith(baseDir)) return notFound(res);
 
-  fs.readFile(fullPath, (err, content) => {
-    if (err) return notFound(res);
+  fs.stat(fullPath, (statErr, stat) => {
+    if (statErr || !stat.isFile()) return notFound(res);
+
     const ext = path.extname(fullPath).toLowerCase();
-    res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream' });
-    res.end(content);
+    // Uploaded photos get a fresh random filename every time they're
+    // replaced, so caching them "forever" is always safe. Everything else
+    // (html/css/js/icons) gets a short-lived cache that's revalidated via
+    // ETag — the browser skips re-downloading unchanged files (a fast 304)
+    // but never risks showing something stale after a deploy.
+    const isUpload = baseDir === UPLOADS_DIR;
+    const cacheControl = isUpload
+      ? 'public, max-age=31536000, immutable'
+      : 'no-cache';
+    const etag = `"${stat.size}-${Math.round(stat.mtimeMs)}"`;
+
+    if (req.headers['if-none-match'] === etag) {
+      res.writeHead(304, { ETag: etag, 'Cache-Control': cacheControl });
+      return res.end();
+    }
+
+    fs.readFile(fullPath, (err, content) => {
+      if (err) return notFound(res);
+      const headers = {
+        'Content-Type': MIME[ext] || 'application/octet-stream',
+        'Cache-Control': cacheControl,
+        ETag: etag,
+        'Last-Modified': stat.mtime.toUTCString()
+      };
+
+      const acceptsGzip = (req.headers['accept-encoding'] || '').includes('gzip');
+      if (acceptsGzip && COMPRESSIBLE_EXT.has(ext)) {
+        return zlib.gzip(content, (gzErr, gzipped) => {
+          if (gzErr) {
+            res.writeHead(200, headers);
+            return res.end(content);
+          }
+          headers['Content-Encoding'] = 'gzip';
+          headers['Vary'] = 'Accept-Encoding';
+          res.writeHead(200, headers);
+          res.end(gzipped);
+        });
+      }
+
+      res.writeHead(200, headers);
+      res.end(content);
+    });
   });
 }
 

@@ -26,6 +26,45 @@
     in_soil: 'In soil'
   };
 
+  // Camera photos can be several MB straight off a phone — that's most of
+  // what makes the site feel slow to load. Downscale + re-compress to JPEG
+  // in the browser before it ever gets uploaded, entirely with built-in
+  // Canvas APIs (no extra libraries needed).
+  function resizeImageFile(file, maxDim, quality) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error('Could not read that photo'));
+      reader.onload = () => {
+        const img = new Image();
+        img.onerror = () => reject(new Error('Could not read that photo'));
+        img.onload = () => {
+          let { width, height } = img;
+          if (width > maxDim || height > maxDim) {
+            if (width >= height) {
+              height = Math.round(height * (maxDim / width));
+              width = maxDim;
+            } else {
+              width = Math.round(width * (maxDim / height));
+              height = maxDim;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          // White backdrop first so PNGs with transparency don't turn black
+          // once flattened into JPEG (which has no alpha channel).
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, width, height);
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
   let pendingPhotoDataUrl = null;
 
   function showToast(msg) {
@@ -35,20 +74,20 @@
     showToast._t = setTimeout(() => (toast.style.display = 'none'), 3000);
   }
 
-  photoInput.addEventListener('change', () => {
+  photoInput.addEventListener('change', async () => {
     const file = photoInput.files[0];
     if (!file) {
       pendingPhotoDataUrl = null;
       photoPreview.style.display = 'none';
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      pendingPhotoDataUrl = reader.result;
-      photoPreview.style.backgroundImage = `url('${reader.result}')`;
+    try {
+      pendingPhotoDataUrl = await resizeImageFile(file, 1600, 0.82);
+      photoPreview.style.backgroundImage = `url('${pendingPhotoDataUrl}')`;
       photoPreview.style.display = 'block';
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      showToast(err.message);
+    }
   });
 
   addForm.addEventListener('submit', async (e) => {
@@ -236,19 +275,19 @@
     if (e.target === editModal) closeEditModal();
   });
 
-  ePhotoInput.addEventListener('change', () => {
+  ePhotoInput.addEventListener('change', async () => {
     const file = ePhotoInput.files[0];
     if (!file) {
       pendingEditPhotoDataUrl = null;
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      pendingEditPhotoDataUrl = reader.result;
-      ePhotoPreview.style.backgroundImage = `url('${reader.result}')`;
+    try {
+      pendingEditPhotoDataUrl = await resizeImageFile(file, 1600, 0.82);
+      ePhotoPreview.style.backgroundImage = `url('${pendingEditPhotoDataUrl}')`;
       ePhotoPreview.style.display = 'block';
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      showToast(err.message);
+    }
   });
 
   editForm.addEventListener('submit', async (e) => {
