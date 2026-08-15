@@ -247,10 +247,13 @@
     what.innerHTML = `<span class="who">${escapeHtml(claim.name)}</span> — ${escapeHtml(plant.name)} ` +
       `(${claim.qty} ${claim.qty === 1 ? 'unit' : 'units'})`;
     row.appendChild(what);
+    const meta = document.createElement('div');
+    meta.className = 'picked-up-meta';
+
     const when = document.createElement('div');
     when.className = 'picked-up-when';
     when.textContent = claim.pickedUpAt ? formatShortDate(claim.pickedUpAt) : '';
-    row.appendChild(when);
+    meta.appendChild(when);
 
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'picked-up-delete';
@@ -258,8 +261,9 @@
     deleteBtn.setAttribute('aria-label', `Remove ${claim.name} — ${plant.name} from picked up`);
     deleteBtn.title = 'Remove from this list';
     deleteBtn.addEventListener('click', () => claimAction(plant.id, claim.id, 'reject'));
-    row.appendChild(deleteBtn);
+    meta.appendChild(deleteBtn);
 
+    row.appendChild(meta);
     return row;
   }
 
@@ -283,9 +287,27 @@
     const res = await fetch('/api/plants');
     const plants = await res.json();
     plants.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    // A listing drops off "Your listings" once there's nothing left to give
+    // AND nothing left to act on — i.e. no pending/confirmed claims still
+    // waiting on you. It isn't deleted, just out of the way; its picked-up
+    // claims still show in the Picked up list below.
+    const activePlants = plants.filter((p) => {
+      const needsAction = (p.claims || []).some((c) => c.status === 'requested' || c.status === 'confirmed');
+      return p.remaining > 0 || needsAction;
+    });
+
     adminList.innerHTML = '';
-    adminEmpty.style.display = plants.length ? 'none' : 'block';
-    plants.forEach((p) => adminList.appendChild(renderRow(p)));
+    if (!plants.length) {
+      adminEmpty.textContent = 'No listings yet — add your first one!';
+      adminEmpty.style.display = 'block';
+    } else if (!activePlants.length) {
+      adminEmpty.textContent = "Everything's been picked up! Add something new, or check the Picked up list below.";
+      adminEmpty.style.display = 'block';
+    } else {
+      adminEmpty.style.display = 'none';
+    }
+    activePlants.forEach((p) => adminList.appendChild(renderRow(p)));
     renderPickedUp(plants);
   }
 

@@ -390,7 +390,6 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .picked-up-row {
   display: flex;
-  justify-content: space-between;
   align-items: baseline;
   gap: 10px;
   padding: 7px 0;
@@ -399,9 +398,16 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   color: var(--ink-soft);
 }
 .picked-up-row:last-child { border-bottom: none; }
-.picked-up-row .picked-up-what { color: var(--ink); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.picked-up-row .picked-up-what { flex: 1; color: var(--ink); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .picked-up-row .picked-up-what .who { font-weight: 600; }
-.picked-up-row .picked-up-when { font-size: 0.72rem; color: var(--ink-soft); white-space: nowrap; flex-shrink: 0; }
+
+.picked-up-row .picked-up-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.picked-up-row .picked-up-when { font-size: 0.72rem; color: var(--ink-soft); white-space: nowrap; }
 
 .picked-up-row .picked-up-delete {
   background: transparent;
@@ -410,8 +416,7 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   font-size: 1rem;
   line-height: 1;
   cursor: pointer;
-  padding: 0 0 0 2px;
-  flex-shrink: 0;
+  padding: 0 2px;
   border-radius: 4px;
 }
 .picked-up-row .picked-up-delete:hover { color: var(--danger); }
