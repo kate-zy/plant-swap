@@ -26,20 +26,6 @@
     in_soil: 'In soil'
   };
 
-  // The claim word list — cute, short stand-ins for "Claim this" that show
-  // up at random on each listing's button. Add more any time.
-  const CLAIM_WORDS = [
-    'Yes please', "I want this!", 'Gimme', 'Mine!', 'Dibs!', 'Claim it',
-    'Yes plz', 'So mine', 'Obsessed', 'Need this', 'Want it', 'Send it',
-    "I'll take it", 'Yes to this', "It's mine", 'Yes, this!', 'Claimed!',
-    'I call it', 'Deal!', 'Say less', 'Yup, mine', 'Ooh, mine!',
-    'Yes yes yes', 'Yes!!'
-  ];
-
-  function randomClaimWord() {
-    return CLAIM_WORDS[Math.floor(Math.random() * CLAIM_WORDS.length)];
-  }
-
   function getStoredView() {
     try {
       return localStorage.getItem('plantSwapView') === 'list' ? 'list' : 'grid';
@@ -128,7 +114,7 @@
       const claimBtn = document.createElement('button');
       claimBtn.className = 'btn-primary';
       if (p.remaining > 0) {
-        claimBtn.textContent = randomClaimWord();
+        claimBtn.textContent = 'Claim';
         claimBtn.addEventListener('click', () => openClaimModal(p));
       } else {
         claimBtn.textContent = 'Fully claimed';
