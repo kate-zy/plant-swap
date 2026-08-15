@@ -9,3 +9,4 @@ data/uploads/
 # Node
 node_modules/
 npm-debug.log*
+_to_delete/
