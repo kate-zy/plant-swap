@@ -251,6 +251,15 @@
     when.className = 'picked-up-when';
     when.textContent = claim.pickedUpAt ? formatShortDate(claim.pickedUpAt) : '';
     row.appendChild(when);
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'picked-up-delete';
+    deleteBtn.textContent = '×';
+    deleteBtn.setAttribute('aria-label', `Remove ${claim.name} — ${plant.name} from picked up`);
+    deleteBtn.title = 'Remove from this list';
+    deleteBtn.addEventListener('click', () => claimAction(plant.id, claim.id, 'reject'));
+    row.appendChild(deleteBtn);
+
     return row;
   }
 

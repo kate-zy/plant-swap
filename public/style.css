@@ -403,6 +403,19 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .picked-up-row .picked-up-what .who { font-weight: 600; }
 .picked-up-row .picked-up-when { font-size: 0.72rem; color: var(--ink-soft); white-space: nowrap; flex-shrink: 0; }
 
+.picked-up-row .picked-up-delete {
+  background: transparent;
+  border: none;
+  color: var(--ink-soft);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0 0 2px;
+  flex-shrink: 0;
+  border-radius: 4px;
+}
+.picked-up-row .picked-up-delete:hover { color: var(--danger); }
+
 @media (max-width: 800px) {
   .admin-layout { grid-template-columns: 1fr; }
 }
