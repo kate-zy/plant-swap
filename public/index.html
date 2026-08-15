@@ -56,8 +56,14 @@
           <input type="text" id="claim-name" required>
         </div>
         <div class="field">
-          <label for="claim-contact">Best way to reach you (email, phone, etc.)</label>
-          <input type="text" id="claim-contact" required>
+          <label for="claim-contact">How will you grab it?</label>
+          <select id="claim-contact" required>
+            <option value="" disabled selected>Choose one...</option>
+            <option value="Next time I see you">Next time I see you</option>
+            <option value="I'll swing by and pick it up!">I'll swing by and pick it up!</option>
+            <option value="other">Other...</option>
+          </select>
+          <input type="text" id="claim-contact-other" placeholder="Tell us how/when, or how to reach you" style="display:none; margin-top:8px;">
         </div>
         <div class="field" id="claim-qty-field">
           <label for="claim-qty">How many would you like?</label>

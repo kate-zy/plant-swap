@@ -8,7 +8,15 @@
   const claimForm = document.getElementById('claim-form');
   const claimPlantName = document.getElementById('claim-plant-name');
   const claimQtyInput = document.getElementById('claim-qty');
+  const claimContactSelect = document.getElementById('claim-contact');
+  const claimContactOther = document.getElementById('claim-contact-other');
   const toast = document.getElementById('toast');
+
+  claimContactSelect.addEventListener('change', () => {
+    const isOther = claimContactSelect.value === 'other';
+    claimContactOther.style.display = isOther ? 'block' : 'none';
+    if (isOther) claimContactOther.focus();
+  });
 
   const FORM_LABELS = {
     fresh_prop: 'Fresh prop',
@@ -69,7 +77,7 @@
 
       const badge = document.createElement('span');
       badge.className = `badge ${p.remaining > 0 ? 'available' : 'claimed'}`;
-      badge.textContent = p.remaining > 0 ? `${p.remaining} available` : 'Fully claimed';
+      badge.textContent = p.remaining > 0 ? `${p.remaining} of ${p.quantity} available` : 'Fully claimed';
       badgeRow.appendChild(badge);
 
       const formBadge = document.createElement('span');
@@ -123,6 +131,7 @@
     claimForm.reset();
     claimQtyInput.value = 1;
     claimQtyInput.max = plant.remaining;
+    claimContactOther.style.display = 'none';
     modal.style.display = 'flex';
   }
 
@@ -140,7 +149,13 @@
     e.preventDefault();
     if (!claimTarget) return;
     const name = document.getElementById('claim-name').value.trim();
-    const contact = document.getElementById('claim-contact').value.trim();
+    const contact = claimContactSelect.value === 'other'
+      ? claimContactOther.value.trim()
+      : claimContactSelect.value;
+    if (!contact) {
+      showToast(claimContactSelect.value === 'other' ? 'Let us know how to reach you' : 'Please choose an option');
+      return;
+    }
     const message = document.getElementById('claim-message').value.trim();
     const qty = Math.max(1, parseInt(claimQtyInput.value, 10) || 1);
     try {
