@@ -1,8 +1,11 @@
 // Minimal service worker — just enough to make Plant Swap installable and
 // give it a basic offline fallback. Listings/photos always go to the network
 // so nobody sees stale claim data.
-const CACHE = 'plant-swap-shell-v1';
-const SHELL = ['/', '/index.html', '/admin.html', '/style.css', '/app.js', '/admin.js'];
+const CACHE = 'plant-swap-shell-v2';
+// admin.html is intentionally left out — it's login-gated, so trying to
+// pre-cache it in the background (before anyone's clicked Admin) makes the
+// browser pop up the login prompt for every visitor, not just the admin.
+const SHELL = ['/', '/index.html', '/style.css', '/app.js', '/admin.js'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)));
